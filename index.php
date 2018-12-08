@@ -1,10 +1,9 @@
 <?php
 
-require_once 'vendor/autoload.php';
-// require __DIR__ . DIRECTORY_SEPARATOR . 'vendor'. DIRECTORY_SEPARATOR .'autoload.php';
+require __DIR__.'/hook.php';
 
 $token = 'токен';
-$bot = new \TelegramBot\Api\Client($token);
+$bot = new Longman\TelegramBot\Telegram($bot_api_key, $bot_username);
 // команда для start
 $bot->command('start', function ($message) use ($bot) {
     $answer = 'Добро пожаловать!';
