@@ -1,45 +1,19 @@
 <?php
 
-ini_set('log_errors', 1);
-ini_set('error_log', './tg.log');
 // Load composer
-require_once __DIR__.'/vendor/autoload.php';
-use Longman\TelegramBot\Request;
-use Longman\TelegramBot\Entities\Update;
+require __DIR__.'/vendor/autoload.php';
 
-// Add you bot's API key and name
-$bot_api_key = '';
-$bot_username = '';
-$yourUsername = '';
-$yourChatId = 0;
+$bot_api_key = '777667988:AAEJoiv_SwN6hLQCYb4H8MuCjcDqEbwqfF0';
+$bot_username = 'r2c3_bot';
+
 try {
+    // Create Telegram API object
     $telegram = new Longman\TelegramBot\Telegram($bot_api_key, $bot_username);
-    Longman\TelegramBot\TelegramLog::initErrorLog(__DIR__."/{$bot_username}_error.log");
-    Longman\TelegramBot\TelegramLog::initDebugLog(__DIR__."/{$bot_username}_debug.log");
-    Longman\TelegramBot\TelegramLog::initUpdateLog(__DIR__."/{$bot_username}_update.log");
-    $telegram->enableLimiter();
 
-    $post = json_decode(Request::getInput(), true);
-    $oUpdate = new Update($post, $bot_username);
-    $oMessage = $oUpdate->getMessage();
-
-    $sText = $oMessage->getText();
-    if (strpos($sText, '@'.$yourUsername) !== false || (isset($post['reply_to_message']) && $post['reply_to_message']['from']['username'] == $yourUsername)) {
-        $data = [];
-        $data['chat_id'] = $yourChatId;
-        $data['text'] = 'Neue Nachricht in: '.$oMessage->getChat()->getTitle()."\n\nVon: @".$oMessage->getFrom()->getUsername().' ('.$oMessage->getFrom()->getFirstName().")\nNachricht:\n".$sText;
-
-        return Request::sendMessage($data);
-    }
-
-    return Request::emptyResponse();
+    // Handle telegram webhook request
+    $telegram->handle();
 } catch (Longman\TelegramBot\Exception\TelegramException $e) {
     // Silence is golden!
-    //echo $e;
-    // Log telegram errors
-    Longman\TelegramBot\TelegramLog::error($e);
-} catch (Longman\TelegramBot\Exception\TelegramLogException $e) {
-    // Silence is golden!
-    // Uncomment this to catch log initialisation errors
-    //echo $e;
+    // log telegram errors
+    // echo $e->getMessage();
 }

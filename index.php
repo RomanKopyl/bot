@@ -1,30 +1,45 @@
 <?php
 
-require __DIR__.'/hook.php';
+ini_set('log_errors', 1);
+ini_set('error_log', './tg.log');
+// Load composer
+require_once __DIR__.'/vendor/autoload.php';
+use Longman\TelegramBot\Request;
+use Longman\TelegramBot\Entities\Update;
 
-$token = 'токен';
-$bot = new Longman\TelegramBot\Telegram($bot_api_key, $bot_username);
-// команда для start
-$bot->command('start', function ($message) use ($bot) {
-    $answer = 'Добро пожаловать!';
-    $bot->sendMessage($message->getChat()->getId(), $answer);
-});
+// Add you bot's API key and name
+$bot_api_key = '';
+$bot_username = '';
+$yourUsername = '';
+$yourChatId = 0;
+try {
+    $telegram = new Longman\TelegramBot\Telegram($bot_api_key, $bot_username);
+    Longman\TelegramBot\TelegramLog::initErrorLog(__DIR__."/{$bot_username}_error.log");
+    Longman\TelegramBot\TelegramLog::initDebugLog(__DIR__."/{$bot_username}_debug.log");
+    Longman\TelegramBot\TelegramLog::initUpdateLog(__DIR__."/{$bot_username}_update.log");
+    $telegram->enableLimiter();
 
-// команда для помощи
-$bot->command('help', function ($message) use ($bot) {
-    $answer = 'Команды:
-/help - вывод справки';
-    $bot->sendMessage($message->getChat()->getId(), $answer);
-});
+    $post = json_decode(Request::getInput(), true);
+    $oUpdate = new Update($post, $bot_username);
+    $oMessage = $oUpdate->getMessage();
 
-// $bot->command('hello', function ($message) use ($bot) {
-//     $text = $message->getText();
-//     $param = str_replace('/hello ', '', $text);
-//     $answer = 'Неизвестная команда';
-//     if (!empty($param)) {
-//         $answer = 'Привет, '.$param;
-//     }
-//     $bot->sendMessage($message->getChat()->getId(), $answer);
-// });
+    $sText = $oMessage->getText();
+    if (strpos($sText, '@'.$yourUsername) !== false || (isset($post['reply_to_message']) && $post['reply_to_message']['from']['username'] == $yourUsername)) {
+        $data = [];
+        $data['chat_id'] = $yourChatId;
+        $data['text'] = 'Neue Nachricht in: '.$oMessage->getChat()->getTitle()."\n\nVon: @".$oMessage->getFrom()->getUsername().' ('.$oMessage->getFrom()->getFirstName().")\nNachricht:\n".$sText;
 
-$bot->run();
+        return Request::sendMessage($data);
+    }
+
+    return Request::emptyResponse();
+} catch (Longman\TelegramBot\Exception\TelegramException $e) {
+    // Silence is golden!
+    //echo $e;
+    // Log telegram errors
+    Longman\TelegramBot\TelegramLog::error($e);
+} catch (Longman\TelegramBot\Exception\TelegramLogException $e) {
+    // Silence is golden!
+    // Uncomment this to catch log initialisation errors
+    //echo $e;
+}
